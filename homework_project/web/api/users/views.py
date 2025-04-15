@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from homework_project.db.models.users import (
-    UserCreate,  # type: ignore
+from homework_project.db.models.users import (  # type: ignore
+    UserCreate,
     UserRead,  # type: ignore
     UserUpdate,  # type: ignore
     api_users,  # type: ignore
@@ -34,5 +34,7 @@ router.include_router(
     tags=["users"],
 )
 router.include_router(
-    api_users.get_auth_router(auth_jwt), prefix="/auth/jwt", tags=["auth"],
+    api_users.get_auth_router(auth_jwt),
+    prefix="/auth/jwt",
+    tags=["auth"],
 )

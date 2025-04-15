@@ -1,4 +1,3 @@
-
 import uvicorn
 
 from homework_project.gunicorn_runner import GunicornApplication
