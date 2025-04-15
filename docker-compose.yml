@@ -1,0 +1,70 @@
+services:
+  api: &main_app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: homework_project:${HOMEWORK_PROJECT_VERSION:-latest}
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      HOMEWORK_PROJECT_HOST: 0.0.0.0
+      HOMEWORK_PROJECT_DB_HOST: homework_project-db
+      HOMEWORK_PROJECT_DB_PORT: 5432
+      HOMEWORK_PROJECT_DB_USER: homework_project
+      HOMEWORK_PROJECT_DB_PASS: homework_project
+      HOMEWORK_PROJECT_DB_BASE: homework_project
+      HOMEWORK_PROJECT_REDIS_HOST: homework_project-redis
+
+  db:
+    image: postgres:16.3-bullseye
+    hostname: homework_project-db
+    environment:
+      POSTGRES_PASSWORD: "homework_project"
+      POSTGRES_USER: "homework_project"
+      POSTGRES_DB: "homework_project"
+    volumes:
+      - homework_project-db-data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: pg_isready -U homework_project
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  migrator:
+    image: homework_project:${HOMEWORK_PROJECT_VERSION:-latest}
+    restart: "no"
+    command: alembic upgrade head
+    environment:
+      HOMEWORK_PROJECT_DB_HOST: homework_project-db
+      HOMEWORK_PROJECT_DB_PORT: 5432
+      HOMEWORK_PROJECT_DB_USER: homework_project
+      HOMEWORK_PROJECT_DB_PASS: homework_project
+      HOMEWORK_PROJECT_DB_BASE: homework_project
+    depends_on:
+      db:
+        condition: service_healthy
+
+  redis:
+    image: bitnami/redis:6.2.5
+    hostname: "homework_project-redis"
+    restart: always
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+    healthcheck:
+      test: redis-cli ping
+      interval: 1s
+      timeout: 3s
+      retries: 50
+
+
+
+volumes:
+  homework_project-db-data:
+    name: homework_project-db-data
